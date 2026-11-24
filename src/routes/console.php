@@ -28,7 +28,7 @@ Schedule::call(function () {
     foreach ($appointments as $appointment) {
         SendMasterReminderJob::dispatch($appointment->id);
     }
-})->everyMinute()->withoutOverlapping()->name('send-appointment-reminders');
+})->everyMinute()->name('send-appointment-reminders')->withoutOverlapping();
 
 Schedule::command('expenses:create-recurring')
     ->hourly()
