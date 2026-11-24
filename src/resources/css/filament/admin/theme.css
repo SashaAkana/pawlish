@@ -1,0 +1,43 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+
+@config 'tailwind.config.js';
+
+/* Keep page title and header actions on one line across Filament pages.
+   Important flags are used to override utility classes like `flex-col` / `sm:flex-row`. */
+.fi-page .fi-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    flex-wrap: nowrap !important;
+}
+
+.fi-page .fi-header > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.fi-page .fi-header > div:last-child {
+    margin-top: 0 !important;
+    margin-left: auto;
+}
+
+.fi-page .fi-header .fi-header-heading {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fi-page .fi-header .fi-ac {
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+}
+
+.fi-page .fi-header .fi-ac .fi-btn {
+    white-space: nowrap;
+}

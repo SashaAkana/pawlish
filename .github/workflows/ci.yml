@@ -1,0 +1,83 @@
+name: Check Pawlish
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3, mbstring, intl, dom, xmlreader, zip, bcmath
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install locked PHP dependencies
+        run: |
+          cp .env.example .env
+          touch database/database.sqlite
+          composer validate --no-check-publish
+          composer install --no-interaction --prefer-dist
+          php artisan key:generate
+      - name: Build frontend
+        run: npm ci && npm run build
+      - name: PHP syntax and tests
+        run: |
+          find app routes bootstrap database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          php artisan test
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build and start
+        run: |
+          cp src/.env.example src/.env
+          key=$(openssl rand -base64 32)
+          sed -i "s|^APP_KEY=.*|APP_KEY=base64:$key|" src/.env
+          docker compose config --quiet
+          docker compose build app
+          docker compose up -d --wait --wait-timeout 180
+      - name: Smoke test
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:18080/up
+          curl --fail --silent --show-error http://127.0.0.1:18080/panel/login -o /tmp/pawlish-login.html
+          grep -q 'Pawlish' /tmp/pawlish-login.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/api/telegram/webhook)" = 403
+          docker compose exec -T app php artisan migrate:status
+          docker compose exec -T app php artisan route:list --path=telegram
+      - if: failure()
+        run: docker compose logs --no-color --tail=100
+      - if: always()
+        run: docker compose down -v
+  dependencies:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: PHP dependency advisories
+        run: composer audit --locked --no-dev
+      - name: JavaScript dependency advisories
+        if: always()
+        run: npm audit --audit-level=high

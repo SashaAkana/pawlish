@@ -1,0 +1,12 @@
+/src/.env*
+!/src/.env.example
+/src/database/*.sqlite*
+/src/auth.json
+/src/vendor/
+/src/node_modules/
+/src/public/build/
+/src/public/css/
+/src/public/js/
+/src/public/hot
+*.log
+/backups/
